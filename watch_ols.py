@@ -5,7 +5,8 @@ from bs4 import BeautifulSoup
 
 data = []
 
-def search_or (search_type):
+
+def search_or(search_type):
     month = '3'
     day = '10'
     year = '1981'
@@ -19,12 +20,21 @@ def search_or (search_type):
     r = s.get(ardbeg_url)
 
     soup = BeautifulSoup(r.content, features="lxml")
-    table = soup.find('table', {'class':'list'})
+    table = soup.find('table', {'class': 'list'})
     first_check = [item for item in table.find_all('th')]
-    first_check = first_check[0].text
-    return table
+    try:
+        if first_check[0].text == 'Item Code':
+            response = parse_table(table)
+        elif first_check[0].text == 'Store No':
+            table = soup.find('table', {'id': 'product-details'})
+            response = parse_item(table)
+    except:
+        response = 'ERROR'
 
-def parse_table (table):
+    return response
+
+
+def parse_table(table):
     title_row = [title.text for title in table.find_all('th')]
     data.append(title_row)
 
@@ -32,11 +42,31 @@ def parse_table (table):
     for child in each_item:
         li = [each.text for each in child.find_all('td') if each.text]
         data.append(li)
+    
+    response = 'Data processed'
+    return response
 
-search_var = 'ardbeg'
+def parse_item(table):
+    title_list = ['Item Code', 'Description', 'Liquor Category', 'Size', 'Proof', 'Age', 'Case Price', 'Bottle Price']
+
+    each_item = table.find('h2').text
+    parts = each_item.split(': ')
+    name = str(parts[1])
+    item_code = parts[0].split(' ')
+    
+    each_item_info = table.find_all('td')
+    li_info = [each.text for each in each_item_info]
+    li = [item_code[1], name, li_info[1], li_info[3], li_info[5], ' ', li_info[4], li_info[6]]
+    data.append(title_list)
+    data.append(li)
+
+    response = 'Data processed'
+    return response
+
+
+search_var = 'wolfburn'
 search_table = search_or(search_var)
-print(search_table)
-# parse_table(search_table)
+print(data)
 
 # for bottle in data:
 #     print(bottle[7], '-', bottle[1])
